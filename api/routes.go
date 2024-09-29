@@ -3,6 +3,8 @@
 package api
 
 import (
+	"cloud.google.com/go/firestore"
+	"cloud.google.com/go/storage"
 	"github.com/gin-gonic/gin"
 
 	"backend/api/controllers"
@@ -13,27 +15,27 @@ import (
 )
 
 // SetupRouter configura las rutas para el módulo de autenticación
-func SetupRouter(r *gin.Engine, db *gorm.DB, authClient *auth.Client) {
+func SetupRouter(r *gin.Engine, firestoreClient *firestore.Client, authClient *auth.Client, storageClient *storage.Client, db *gorm.DB) {
 	authRoutes := r.Group("/")
 	{
 		authRoutes.POST("/login", controllers.LoginUser)
 		authRoutes.POST("/register", func(c *gin.Context) {
-			controllers.RegisterUser(c, db)
+			controllers.RegisterUser(c, firestoreClient)
 		})
 		authRoutes.POST("/verify-code", func(c *gin.Context) {
-			controllers.VerifyCode(c, db, authClient)
+			controllers.VerifyCode(c, firestoreClient, authClient)
 		})
 		authRoutes.POST("/resend-code", middleware.AuthMiddleware(authClient), func(c *gin.Context) {
-			controllers.ResendCode(c, db)
+			controllers.ResendCode(c, firestoreClient)
 		})
 		authRoutes.PATCH("/update", middleware.AuthMiddleware(authClient), func(c *gin.Context) {
-			controllers.UpdateProfile(c, db, authClient)
+			controllers.UpdateProfile(c, firestoreClient, authClient)
 		})
 		authRoutes.POST("/upload-photo", middleware.AuthMiddleware(authClient), func(c *gin.Context) {
-			controllers.UploadPhoto(c, db, authClient)
+			controllers.UploadPhoto(c, firestoreClient, storageClient, authClient)
 		})
 		authRoutes.POST("/forgot-password", func(c *gin.Context) {
-			controllers.ForgotPassword(c, authClient, db)
+			controllers.ForgotPassword(c, authClient, firestoreClient)
 		})
 		authRoutes.POST("/change-password", middleware.JWTMiddleware(), func(c *gin.Context) {
 			controllers.ChangePassword(c, authClient)

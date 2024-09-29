@@ -25,10 +25,13 @@ import (
 // @host localhost:8081
 func main() {
 	// Configurar y obtener los clientes de Firebase
-	authClient, err := configSetup()
+	firestoreClient, authClient, storageClient, err := configSetup()
 	if err != nil {
 		log.Fatalf("Error configurando Firebase y clientes: %v", err)
 	}
+
+	// Cerrar cliente de Firestore al finalizar la aplicación
+	defer firestoreClient.Close()
 
 	// Conectar a la base de datos
 	db, err := utils.OpenGormDB()
@@ -64,7 +67,7 @@ func main() {
 	})
 
 	// Configurar rutas desde el paquete de autenticación (api)
-	api.SetupRouter(r, db, authClient)
+	api.SetupRouter(r, firestoreClient, authClient, storageClient, db)
 
 	// Iniciar el servidor solo después de la inicialización completa
 	port := "8081"
